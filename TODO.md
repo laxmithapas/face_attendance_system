@@ -1,0 +1,4 @@
+- [x] Add sqlite3 adapters and converters for date/datetime in face_attendance.py to fix DeprecationWarning
+- [x] Add sqlite3 adapters and converters for date/datetime in app.py to fix DeprecationWarning
+- [x] Update app.py API endpoints to convert timestamps to IST before returning JSON
+- [ ] Test the application to confirm no warnings and IST times in dashboard
