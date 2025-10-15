@@ -7,6 +7,7 @@ from datetime import datetime, date
 import os
 from cryptography.fernet import Fernet
 import pickle
+import pytz
 
 # Register sqlite3 adapters and converters to avoid DeprecationWarning in Python 3.12
 def adapt_date_iso(val):
@@ -228,6 +229,11 @@ class SimpleFaceAttendanceSystem:
         _, thresh = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
         return np.sum(thresh) > 1000  # Motion detected if enough pixels changed
     
+    def get_current_time(self):
+        """Get current time in IST"""
+        ist = pytz.timezone('Asia/Kolkata')
+        return datetime.now(ist)
+
     def log_security_event(self, event_type, description, severity="medium"):
         """Log security events with IST timestamp"""
         cursor = self.conn.cursor()
