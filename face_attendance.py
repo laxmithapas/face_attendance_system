@@ -109,13 +109,17 @@ class SimpleFaceAttendanceSystem:
     def capture_faces_for_training(self, name, num_samples=30):
         """Capture face samples for training"""
         print(f"Capturing face samples for {name}")
-        print("Look at the camera and press SPACE to capture samples")
-        print("Press 'q' to quit")
+        print("Look at the camera. Samples will be captured automatically when a face is detected.")
+        print("Press 'q' to quit early")
         
         cap = cv2.VideoCapture(0)
         samples_collected = 0
         face_samples = []
         
+        frame_count = 0
+        start_time = datetime.now()
+        timeout_seconds = 60  # give up after 60 seconds
+
         while samples_collected < num_samples:
             ret, frame = cap.read()
             if not ret:
@@ -127,29 +131,35 @@ class SimpleFaceAttendanceSystem:
                 gray, 
                 scaleFactor=1.1,
                 minNeighbors=6,       # Higher threshold
-                minSize=(80, 80),     # Minimum size
-                maxSize=(300, 300)    # Maximum size to avoid background objects
+                minSize=(80, 80)      # Minimum face size
             )
             
             for (x, y, w, h) in faces:
                 cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
                 cv2.putText(frame, f"Samples: {samples_collected}/{num_samples}", 
                            (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                
-                key = cv2.waitKey(1) & 0xFF
-                if key == ord(' '):  # Space bar to capture
+
+                # Auto-capture one sample every few frames to avoid near-duplicate images
+                frame_count += 1
+                if frame_count % 5 == 0:
                     face_sample = gray[y:y+h, x:x+w]
                     face_samples.append(face_sample)
                     samples_collected += 1
                     print(f"Sample {samples_collected} captured")
-                    
-                elif key == ord('q'):
+
+                # Allow quitting early
+                if cv2.waitKey(1) & 0xFF == ord('q'):
                     cap.release()
                     cv2.destroyAllWindows()
                     return face_samples if len(face_samples) > 0 else None
             
             cv2.imshow('Face Capture', frame)
             
+            # timeout to avoid infinite wait when no face is visible
+            if (datetime.now() - start_time).total_seconds() > timeout_seconds:
+                print("Timeout reached while capturing face samples")
+                break
+
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         
